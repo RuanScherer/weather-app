@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:weather_app/domain/CurrentWeather.dart';
 import 'next.dart';
 
 class MainScreen extends StatefulWidget {
@@ -10,12 +12,31 @@ class _MainScreenState extends State<MainScreen> {
   bool _menuIsCollapsed = true;
   double screenWidth, screenHeight;
   Duration duration = Duration(milliseconds: 400);
+  String weekday, message;
+  Future<CurrentWeather> currentWeather;
+
+  @override
+  void initState() {
+    super.initState();
+    currentWeather = CurrentWeather().fetchCurrentWeather();
+  }
 
   @override
   Widget build(BuildContext context) {
     Size _size = MediaQuery.of(context).size;
     screenWidth = _size.width;
     screenHeight = _size.height;
+
+    DateTime date = DateTime.now();
+    weekday = DateFormat.MMMMEEEEd().format(date);
+
+    if (date.hour < 12) {
+      this.message = "Good Morning";
+    } else if (date.hour < 17) {
+      this.message = "Good Afternoon";
+    } else {
+      this.message = "Good Evening";
+    }
 
     return SafeArea(
       child: Stack(
@@ -40,210 +61,215 @@ class _MainScreenState extends State<MainScreen> {
       spreadRadius: 4
     );
 
-    return AnimatedPositioned(
-      height: screenHeight - 20,
-      duration: duration,
-      left: _menuIsCollapsed ? 0 : screenWidth * -0.75,
-      right: _menuIsCollapsed ? 0 : screenWidth * 0.75,
-      child: Material(
-        borderRadius: _menuIsCollapsed ? null : BorderRadius.only(bottomRight: _radius, topRight: _radius),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.bottomLeft,
-              end:  Alignment.topRight,
-              colors: [
-                Color.fromRGBO(81,61,209, 1),
-                Color.fromRGBO(132, 106, 224, 1)
-              ]
-            ),
+    return FutureBuilder(
+      future: currentWeather,
+      builder: (context, snapshot) {
+        return AnimatedPositioned(
+          height: screenHeight - 20,
+          duration: duration,
+          left: _menuIsCollapsed ? 0 : screenWidth * -0.75,
+          right: _menuIsCollapsed ? 0 : screenWidth * 0.75,
+          child: Material(
             borderRadius: _menuIsCollapsed ? null : BorderRadius.only(bottomRight: _radius, topRight: _radius),
-            boxShadow: [
-              _shadow,
-              _shadow,
-              _shadow,
-              _shadow,
-            ]
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,            
-            children: [
-              Container(
-                padding: EdgeInsets.all(24),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomLeft,
+                  end:  Alignment.topRight,
+                  colors: [
+                    Color.fromRGBO(81,61,209, 1),
+                    Color.fromRGBO(132, 106, 224, 1)
+                  ]
+                ),
+                borderRadius: _menuIsCollapsed ? null : BorderRadius.only(bottomRight: _radius, topRight: _radius),
+                boxShadow: [
+                  _shadow,
+                  _shadow,
+                  _shadow,
+                  _shadow,
+                ]
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,            
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(24),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              message,
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white
+                              )
+                            )
+                          ],
+                        ),
+                        IconButton(
+                          icon: Icon(
+                            _menuIsCollapsed ? Icons.menu_rounded : Icons.close_rounded,
+                            color: Colors.white,
+                            size: 38
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _menuIsCollapsed = !_menuIsCollapsed;
+                            });
+                          },
+                          color: Colors.white
+                        )
+                      ]
+                    )
+                  ),
+                  Center(
+                    child: Column(
                       children: [
                         Text(
-                          'Good Morning',
+                          'Blumenau',
                           style: TextStyle(
-                            fontSize: 24,
+                            fontSize: 34,
                             fontWeight: FontWeight.w600,
                             color: Colors.white
                           )
+                        ),
+                        Container(
+                          margin: EdgeInsets.fromLTRB(0, 4, 0, 30),
+                          child: Text(
+                            weekday,
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w200,
+                              color: Colors.white70,
+                              fontFamily: 'Nunito'
+                            )
+                          )
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              margin: EdgeInsets.only(right: 30),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.keyboard_arrow_up,
+                                    color: Colors.white70,
+                                    size: 20,
+                                  ),
+                                  Text(
+                                    snapshot.data.main['temp_max'].toInt().toString() + '°',
+                                    style: _additionalTextStyle,
+                                  )
+                                ]
+                              )
+                            ),
+                            Text(
+                              snapshot.data.main['temp'].toInt().toString() + '°',
+                              style: TextStyle(
+                                fontSize: 64,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                            Container(
+                              margin: EdgeInsets.only(left: 30),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    snapshot.data.main['temp_min'].toInt().toString() + '°',
+                                    style: _additionalTextStyle,
+                                  ),
+                                  Icon(
+                                    Icons.keyboard_arrow_down,
+                                    color: Colors.white70,
+                                    size: 20,
+                                  )
+                                ]
+                              )
+                            ),
+                          ]
                         )
                       ],
+                    ),      
+                  ),
+                  Container(
+                    padding: EdgeInsets.only(
+                      top: 28,
+                      bottom: 40,
+                      left: 24,
+                      right: 24
                     ),
-                    IconButton(
-                      icon: Icon(
-                        _menuIsCollapsed ? Icons.menu_rounded : Icons.close_rounded,
-                        color: Colors.white,
-                        size: 38
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _menuIsCollapsed = !_menuIsCollapsed;
-                        });
-                      },
-                      color: Colors.white
-                    )
-                  ]
-                )
-              ),
-              Center(
-                child: Column(
-                  children: [
-                    Text(
-                      'Blumenau',
-                      style: TextStyle(
-                        fontSize: 34,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.only(
+                        topLeft: _radius, 
+                        topRight: _radius,
+                        bottomRight: _menuIsCollapsed ? Radius.zero : _radius
                       )
                     ),
-                    Container(
-                      margin: EdgeInsets.fromLTRB(0, 4, 0, 30),
-                      child: Text(
-                        'Wednesday 2, December',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w200,
-                          color: Colors.white70,
-                          fontFamily: 'Nunito'
-                        )
-                      )
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    child: Column(
                       children: [
                         Container(
-                          margin: EdgeInsets.only(right: 30),
+                          margin: EdgeInsets.only(bottom: 12),
                           child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Icon(
-                                Icons.keyboard_arrow_up,
-                                color: Colors.white70,
-                                size: 20,
-                              ),
                               Text(
-                                '22°',
-                                style: _additionalTextStyle,
-                              )
+                                'Today',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 18,
+                                  fontFamily: 'Nunito',
+                                  fontWeight: FontWeight.w700
+                                ),
+                              ),
+                              TextButton(
+                                child: Text(
+                                  'Next 7 days',
+                                  style: TextStyle(
+                                    color: Color.fromRGBO(128,111,216, 1),
+                                    fontSize: 16,
+                                    fontFamily: 'Nunito',
+                                    fontWeight: FontWeight.w600
+                                  ),
+                                ),
+                                onPressed: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute<void>(
+                                      builder: (BuildContext context) {
+                                        return NextDaysScreen();
+                                      }
+                                    )
+                                  );
+                                },
+                              ),
                             ]
                           )
                         ),
-                        Text(
-                          '19°',
-                          style: TextStyle(
-                            fontSize: 64,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Container(
-                          margin: EdgeInsets.only(left: 30),
-                          child: Row(
-                            children: [
-                              Text(
-                                '18°',
-                                style: _additionalTextStyle,
-                              ),
-                              Icon(
-                                Icons.keyboard_arrow_down,
-                                color: Colors.white70,
-                                size: 20,
-                              )
-                            ]
-                          )
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _buildWeatherBox('18:00', '22°'),
+                            _buildWeatherBox('19:00', '22°'),
+                            _buildWeatherBox('20:00', '21°'),
+                            _buildWeatherBox('21:00', '19°'),
+                            _buildWeatherBox('22:00', '18°')
+                          ],
                         ),
                       ]
                     )
-                  ],
-                ),      
-              ),
-              Container(
-                padding: EdgeInsets.only(
-                  top: 28,
-                  bottom: 40,
-                  left: 24,
-                  right: 24
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: _radius, 
-                    topRight: _radius,
-                    bottomRight: _menuIsCollapsed ? Radius.zero : _radius
                   )
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      margin: EdgeInsets.only(bottom: 12),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Today',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 18,
-                              fontFamily: 'Nunito',
-                              fontWeight: FontWeight.w700
-                            ),
-                          ),
-                          TextButton(
-                            child: Text(
-                              'Next 7 days',
-                              style: TextStyle(
-                                color: Color.fromRGBO(128,111,216, 1),
-                                fontSize: 16,
-                                fontFamily: 'Nunito',
-                                fontWeight: FontWeight.w600
-                              ),
-                            ),
-                            onPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute<void>(
-                                  builder: (BuildContext context) {
-                                    return NextDaysScreen();
-                                  }
-                                )
-                              );
-                            },
-                          ),
-                        ]
-                      )
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _buildWeatherBox('18:00', '22°'),
-                        _buildWeatherBox('19:00', '22°'),
-                        _buildWeatherBox('20:00', '21°'),
-                        _buildWeatherBox('21:00', '19°'),
-                        _buildWeatherBox('22:00', '18°')
-                      ],
-                    ),
-                  ]
-                )
-              )
-            ],
-          ),
-        )
-      )
+                ],
+              ),
+            )
+          )
+        );
+      }
     );
   }
 
