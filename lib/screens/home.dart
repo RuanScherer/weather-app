@@ -13,6 +13,7 @@ class _MainScreenState extends State<MainScreen> {
   double screenWidth, screenHeight;
   Duration duration = Duration(milliseconds: 400);
   String weekday, message;
+  int hour;
   Future<CurrentWeather> currentWeather;
 
   @override
@@ -29,10 +30,11 @@ class _MainScreenState extends State<MainScreen> {
 
     DateTime date = DateTime.now();
     weekday = DateFormat.MMMMEEEEd().format(date);
+    hour = date.hour;
 
-    if (date.hour < 12) {
+    if (hour < 12) {
       this.message = "Good Morning";
-    } else if (date.hour < 17) {
+    } else if (hour < 17) {
       this.message = "Good Afternoon";
     } else {
       this.message = "Good Evening";
@@ -64,6 +66,16 @@ class _MainScreenState extends State<MainScreen> {
     return FutureBuilder(
       future: currentWeather,
       builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return Material(
+            child: Center(
+              heightFactor: screenHeight,
+              widthFactor: screenWidth,
+              child: CircularProgressIndicator()
+            )
+          );
+        }
+
         return AnimatedPositioned(
           height: screenHeight - 20,
           duration: duration,
