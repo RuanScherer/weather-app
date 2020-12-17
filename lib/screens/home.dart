@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:weather_app/domain/CurrentWeather.dart';
+import 'package:weather_app/domain/ForecastPerHours.dart';
 import 'next.dart';
 
 class MainScreen extends StatefulWidget {
@@ -15,11 +16,13 @@ class _MainScreenState extends State<MainScreen> {
   String weekday, message;
   int hour;
   Future<CurrentWeather> currentWeather;
+  Future<ForecastPerHours> forecastPerHours;
 
   @override
   void initState() {
     super.initState();
     currentWeather = CurrentWeather().fetchCurrentWeather();
+    forecastPerHours = ForecastPerHours().fetchForecastPerHours();
   }
 
   @override
@@ -64,7 +67,7 @@ class _MainScreenState extends State<MainScreen> {
     );
 
     return FutureBuilder(
-      future: currentWeather,
+      future: Future.wait([currentWeather, forecastPerHours]),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return Material(
@@ -174,14 +177,14 @@ class _MainScreenState extends State<MainScreen> {
                                     size: 20,
                                   ),
                                   Text(
-                                    snapshot.data.main['temp_max'].toInt().toString() + '°',
+                                    snapshot.data[0].main['temp_max'].toInt().toString() + '°',
                                     style: _additionalTextStyle,
                                   )
                                 ]
                               )
                             ),
                             Text(
-                              snapshot.data.main['temp'].toInt().toString() + '°',
+                              snapshot.data[0].main['temp'].toInt().toString() + '°',
                               style: TextStyle(
                                 fontSize: 64,
                                 fontWeight: FontWeight.w700,
@@ -193,7 +196,7 @@ class _MainScreenState extends State<MainScreen> {
                               child: Row(
                                 children: [
                                   Text(
-                                    snapshot.data.main['temp_min'].toInt().toString() + '°',
+                                    snapshot.data[0].main['temp_min'].toInt().toString() + '°',
                                     style: _additionalTextStyle,
                                   ),
                                   Icon(
@@ -265,13 +268,7 @@ class _MainScreenState extends State<MainScreen> {
                         ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            _buildWeatherBox('18:00', '22°'),
-                            _buildWeatherBox('19:00', '22°'),
-                            _buildWeatherBox('20:00', '21°'),
-                            _buildWeatherBox('21:00', '19°'),
-                            _buildWeatherBox('22:00', '18°')
-                          ],
+                          children: _buildForecastItems(snapshot.data[1].list),
                         ),
                       ]
                     )
@@ -469,48 +466,57 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  Widget _buildWeatherBox(String hour, String temperature) {
+  List<Widget> _buildForecastItems(List forecastList) {
     final _textStyle = TextStyle(
       color: Colors.grey,
       fontSize: 14,
       fontFamily: 'Nunito'
     );
 
-    return Column(
-      children: [
-        Container(
-          padding: EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            border: Border.all(color: Color.fromRGBO(226,227,228, 1)),
-            borderRadius: BorderRadius.all(Radius.circular(16))
-          ),
-          child: Center(
-            child: Column(
-              children: [
-                Text(
-                  hour,
-                  style: _textStyle,
-                ),
-                Container(
-                  padding: EdgeInsets.only(
-                    top: 10,
-                    bottom: 10
-                  ),
-                  child: Icon(
-                    Icons.cloud_outlined,
-                    color: Colors.grey,
-                    size: 32
-                  )
-                ),
-                Text(
-                  temperature,
-                  style: _textStyle,
-                )
-              ],
+    List<Widget> forecastItems = List<Widget>();
+    
+    forecastItems = forecastList.getRange(0, 5).map<Widget>((forecast) {
+      DateTime forecastDate = DateTime.parse(forecast['dt_txt']);
+      String forecastHour = DateFormat.Hm().format(forecastDate);
+      
+      return Column(
+        children: [
+          Container(
+            padding: EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              border: Border.all(color: Color.fromRGBO(226,227,228, 1)),
+              borderRadius: BorderRadius.all(Radius.circular(16))
             ),
+            child: Center(
+              child: Column(
+                children: [
+                  Text(
+                    forecastHour,
+                    style: _textStyle,
+                  ),
+                  Container(
+                    padding: EdgeInsets.only(
+                      top: 10,
+                      bottom: 10
+                    ),
+                    child: Icon(
+                      Icons.cloud_outlined,
+                      color: Colors.grey,
+                      size: 32
+                    )
+                  ),
+                  Text(
+                    forecast['main']['temp'].toInt().toString() + '°',
+                    style: _textStyle,
+                  )
+                ],
+              ),
+            )
           )
-        )
-      ],
-    );
+        ],
+      );
+    }).toList();
+
+    return forecastItems;
   }
 }
