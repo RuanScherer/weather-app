@@ -79,6 +79,8 @@ class _MainScreenState extends State<MainScreen> {
           );
         }
 
+        Map main = snapshot.data[0].main;
+
         return AnimatedPositioned(
           height: screenHeight - 20,
           duration: duration,
@@ -97,12 +99,7 @@ class _MainScreenState extends State<MainScreen> {
                   ]
                 ),
                 borderRadius: _menuIsCollapsed ? null : BorderRadius.only(bottomRight: _radius, topRight: _radius),
-                boxShadow: [
-                  _shadow,
-                  _shadow,
-                  _shadow,
-                  _shadow,
-                ]
+                boxShadow: [ _shadow, _shadow, _shadow, _shadow ]
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,            
@@ -177,14 +174,14 @@ class _MainScreenState extends State<MainScreen> {
                                     size: 20,
                                   ),
                                   Text(
-                                    snapshot.data[0].main['temp_max'].toInt().toString() + '°',
+                                    formatTemperature(main['temp_max']),
                                     style: _additionalTextStyle,
                                   )
                                 ]
                               )
                             ),
                             Text(
-                              snapshot.data[0].main['temp'].toInt().toString() + '°',
+                              formatTemperature(main['temp']),
                               style: TextStyle(
                                 fontSize: 64,
                                 fontWeight: FontWeight.w700,
@@ -196,7 +193,7 @@ class _MainScreenState extends State<MainScreen> {
                               child: Row(
                                 children: [
                                   Text(
-                                    snapshot.data[0].main['temp_min'].toInt().toString() + '°',
+                                    formatTemperature(main['temp_min']),
                                     style: _additionalTextStyle,
                                   ),
                                   Icon(
@@ -283,6 +280,22 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Widget _buildMenu() {
+     var commonText = (String text) => (
+      Container(
+        margin: EdgeInsets.only(top: 14, bottom: 14),
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
+            fontFamily: 'Nunito',
+            color: Color.fromRGBO(176, 106, 247, 1)
+          ),
+          textAlign: TextAlign.right,
+        )
+      )
+    );
+
     return Material(
       child: Container(
         padding: EdgeInsets.all(24),
@@ -291,33 +304,9 @@ class _MainScreenState extends State<MainScreen> {
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Container(
-                  margin: EdgeInsets.only(right: 10),
-                  child: Text(
-                    'Leandro',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
-                      fontFamily: 'Nunito',
-                      color: Color.fromRGBO(176, 106, 247, 1)
-                    ),
-                    textAlign: TextAlign.right,
-                  )
-                ),
-                ClipRRect(
-                    borderRadius: BorderRadius.circular(50),
-                    child: Image(
-                      image: NetworkImage('https://www.gravatar.com/avatar/205e460b479e2e5b48aec07710c08d50'),
-                      width: 50,
-                      height: 50,
-                    )
-                )
-              ],
-            ),
+            commonText('Weather App'),
             Column(
               children: [
                 Row(
@@ -361,47 +350,6 @@ class _MainScreenState extends State<MainScreen> {
                     )
                   ]
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Container(
-                      margin: EdgeInsets.only(top: 14, bottom: 14),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            'Barra Velha',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w800,
-                              fontFamily: 'Nunito',
-                              color: Color.fromRGBO(179,183,190, 1)
-                            ),
-                            textAlign: TextAlign.right,
-                          ),
-                          Text(
-                            'Santa Catarina',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'Nunito',
-                              color: Color.fromRGBO(199,198,204, 1)
-                            ),
-                            textAlign: TextAlign.right,
-                          )
-                        ]
-                      )
-                    ),
-                    Container(
-                      margin: EdgeInsets.only(left: 10),
-                      child: Icon(
-                        Icons.location_pin,
-                        color: Color.fromRGBO(179,183,190, 1),
-                        size: 26
-                      )
-                    )
-                  ]
-                ),
                 Container(
                   margin: EdgeInsets.only(top: 14, bottom: 14),
                   child: Row(
@@ -430,36 +378,7 @@ class _MainScreenState extends State<MainScreen> {
                 )
               ],
             ),
-            Column(
-              children: [
-                TextButton(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text(
-                        'Sign Out',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
-                          fontFamily: 'Nunito',
-                          color: Color.fromRGBO(241,140,174, 1)
-                        ),
-                        textAlign: TextAlign.end,
-                      ),
-                      Container(
-                        margin: EdgeInsets.only(left: 10),
-                        child: Icon(
-                          Icons.logout,
-                          color: Color.fromRGBO(241,140,174, 1),
-                          size: 28
-                        )
-                      )
-                    ],
-                  ),
-                  onPressed: null
-                )
-              ]
-            )
+            commonText('By Ruan Scherer')
           ],
         )
       )
@@ -506,7 +425,7 @@ class _MainScreenState extends State<MainScreen> {
                     )
                   ),
                   Text(
-                    forecast['main']['temp'].toInt().toString() + '°',
+                    formatTemperature(forecast['main']['temp']),
                     style: _textStyle,
                   )
                 ],
@@ -518,5 +437,9 @@ class _MainScreenState extends State<MainScreen> {
     }).toList();
 
     return forecastItems;
+  }
+
+  String formatTemperature(double temperature) {
+    return temperature.toInt().toString() + '°';
   }
 }
